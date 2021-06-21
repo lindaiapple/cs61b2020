@@ -30,6 +30,12 @@ public class StreetMapGraph implements AStarGraph<Long> {
      * readFromXML and readFromSimpleFormat.
      */
     private StreetMapGraph() {}
+    
+    public StreetMapGraph(String filename) {
+        StreetMapGraph smg = StreetMapGraph.readFromSimpleFormat(filename);
+        this.nodes = smg.nodes;
+        this.neighbors = smg.neighbors;
+    }
 
     /**
      * Returns a list of outgoing edges for V. Assumes V exists in this
@@ -276,8 +282,13 @@ public class StreetMapGraph implements AStarGraph<Long> {
         return sb.toString();
     }
 
-    /*public static void main(String[] args) {
+	public void addWeightedEdge(long fromID, long toID, String wayName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+    public static void main(String[] args) {
         StreetMapGraph smg = StreetMapGraph.readFromXML("berkeley-2018.osm.xml");
         smg.writeToFile("berkeley-street-data.txt");
-    }*/
+    }
 }

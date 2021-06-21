@@ -23,4 +23,8 @@ public class WeightedEdge<Vertex> {
     public double weight() {
         return weight;
     }
+	public void setName(String name) {
+		// TODO Auto-generated method stub
+		
+	}
 }

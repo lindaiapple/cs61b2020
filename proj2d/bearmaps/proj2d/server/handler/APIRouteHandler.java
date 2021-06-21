@@ -17,6 +17,7 @@ import static spark.Spark.halt;
  *
  * Created by rahul
  */
+//这是一个抽象类
 public abstract class APIRouteHandler<Req, Res> implements Route {
 
     /** HTTP failed response. */

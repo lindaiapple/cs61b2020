@@ -4,11 +4,14 @@ import bearmaps.proj2c.AStarSolver;
 import bearmaps.proj2c.ShortestPathsSolver;
 import bearmaps.proj2c.SolverOutcome;
 import bearmaps.proj2c.lectureexample.WeightedDirectedGraph;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import static junit.framework.TestCase.assertEquals;
+import org.junit.Test;
+
+
 
 public class SanityTests {
     private WeightedDirectedGraph lectureGraph() {

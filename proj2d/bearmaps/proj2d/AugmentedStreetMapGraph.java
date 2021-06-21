@@ -19,11 +19,17 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
     public AugmentedStreetMapGraph(String dbPath) {
         super(dbPath);
         // You might find it helpful to uncomment the line below:
-        // List<Node> nodes = this.getNodes();
+        List<Node> nodes = this.getNodes();
     }
 
 
-    /**
+    protected List<Node> getNodes() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	/**
      * For Project Part II
      * Returns the vertex closest to the given longitude and latitude.
      * @param lon The target longitude.
@@ -74,5 +80,18 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
     private static String cleanString(String s) {
         return s.replaceAll("[^a-zA-Z ]", "").toLowerCase();
     }
+
+
+	public double lon(Long v) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+
+	public double lat(Long v) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 
 }

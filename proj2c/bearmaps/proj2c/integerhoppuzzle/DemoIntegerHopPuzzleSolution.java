@@ -1,5 +1,6 @@
 package bearmaps.proj2c.integerhoppuzzle;
 
+import bearmaps.proj2c.AStarSolver;
 import bearmaps.proj2c.LazySolver;
 import bearmaps.proj2c.ShortestPathsSolver;
 import bearmaps.proj2c.SolutionPrinter;
@@ -11,12 +12,12 @@ import bearmaps.proj2c.SolutionPrinter;
  */
 public class DemoIntegerHopPuzzleSolution {
     public static void main(String[] args) {
-        int start = 17;
-        int goal = 111;
+        int start = 1;
+        int goal = 20;
 
         IntegerHopGraph ahg = new IntegerHopGraph();
 
-        ShortestPathsSolver<Integer> solver = new LazySolver<>(ahg, start, goal, 10);
+        ShortestPathsSolver<Integer> solver = new AStarSolver<>(ahg, start, goal, 10);
         SolutionPrinter.summarizeSolution(solver, " => ");
 
     }

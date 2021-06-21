@@ -5,6 +5,7 @@ import bearmaps.proj2d.server.handler.APIRouteHandler;
 import spark.Request;
 import spark.Response;
 import bearmaps.proj2d.utils.Constants;
+import edu.princeton.cs.algs4.DepthFirstDirectedPaths;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -12,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +26,8 @@ import static bearmaps.proj2d.utils.Constants.ROUTE_LIST;
  * Handles requests from the web browser for map images. These images
  * will be rastered into one large image to be displayed to the user.
  * @author rahul, Josh Hug, _________
+ * rastering procesure:1.depth 2. bounding box 3. number of tiles
+ * how to build construction?
  */
 public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<String, Object>> {
 
@@ -35,6 +39,39 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
      * lrlat : lower right corner latitude,<br> lrlon : lower right corner longitude <br>
      * w : user viewport window width in pixels,<br> h : user viewport height in pixels.
      **/
+	private static final double ROOT_UP = Constants.ROOT_ULLAT, ROOT_LEFT = Constants.ROOT_ULLON,
+            ROOT_DOWN = Constants.ROOT_LRLAT, ROOT_RIGHT = Constants.ROOT_LRLON, 
+            ROOT_BASE_X = ROOT_RIGHT-ROOT_LEFT, ROOT_BASE_Y = ROOT_UP-ROOT_DOWN;
+	private List<Double> lonDPP = new ArrayList<>();
+	private List<Double> xWidthLon = new ArrayList<>();
+	private List<Double> yHeightLat = new ArrayList<>();
+	
+	public RasterAPIHandler() {
+		double baseLon = Math.abs(Constants.ROOT_LRLON-Constants.ROOT_ULLON);
+		double baseLat = Math.abs(Constants.ROOT_LRLAT - Constants.ROOT_ULLAT);
+		//how many tiles per Latitude per depth?
+		for(int i=0;i<8;i++) {
+			double pow = Math.pow(2,i);
+			double units = pow * Constants.TILE_SIZE;
+			lonDPP.add(i,baseLon/units);
+			xWidthLon.add(i,baseLon/pow);
+			yHeightLat.add(i,baseLat/pow);
+		}
+	}
+	//based on the lonDPP, how to find the depth?
+	private int getDepth(double qurylonDPP) {
+		int depth = -1;
+		for(int i=0; i< 8; i++) {
+			if(lonDPP.get(i) < qurylonDPP | i==7) {
+				depth = i;
+				break;
+			}
+		}
+		return depth;
+	}
+	// we need considered the bounding box(corner case) 1. if images just cover part of query box,
+	//or the query box zoomed out that include all dataset, in this case, return the data available
+	//if user provide location out of our root, return query failed.
     private static final String[] REQUIRED_RASTER_REQUEST_PARAMS = {"ullat", "ullon", "lrlat",
             "lrlon", "w", "h"};
 
@@ -49,6 +86,7 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
     @Override
     protected Map<String, Double> parseRequestParams(Request request) {
         return getRequestParams(request, REQUIRED_RASTER_REQUEST_PARAMS);
+        //check the input parameters is correct or not
     }
 
     /**
@@ -84,11 +122,52 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
      */
     @Override
     public Map<String, Object> processRequest(Map<String, Double> requestParams, Response response) {
-        //System.out.println("yo, wanna know the parameters given by the web browser? They are:");
-        //System.out.println(requestParams);
+        System.out.println("yo, wanna know the parameters given by the web browser? They are:");
+        System.out.println(requestParams);
         Map<String, Object> results = new HashMap<>();
-        System.out.println("Since you haven't implemented RasterAPIHandler.processRequest, nothing is displayed in "
-                + "your browser.");
+        final double reqLeft = requestParams.get("ullon");
+        final double reqRight = requestParams.get("lrlon");
+        final double reqTop = requestParams.get("ullat");
+        final double reqDown = requestParams.get("lrlat");
+        //case1:total coverage and case3: partly coverage
+        if(reqRight > ROOT_LEFT && reqTop < ROOT_DOWN && reqDown < ROOT_UP && reqLeft<ROOT_RIGHT) {
+        	double queryLonDPP = (reqRight - reqLeft)/requestParams.get("w");
+        	System.out.println("query lonDPP:" + queryLonDPP);
+        	int depth = getDepth(queryLonDPP);
+        	//how to know numbers of tiles?
+        	//x-coordinate number of tiles
+        	int x_start_Tiles = Math.max(0, (int) ((reqLeft - ROOT_LEFT)/xWidthLon.get(depth)));
+        	int x_end_Tiles = (int) Math.min(Math.pow(2, depth)-1, (int) ((reqRight - ROOT_LEFT)/xWidthLon.get(depth)));
+        	int y_start_Tiles = Math.max(0, (int)((ROOT_UP - reqTop)/yHeightLat.get(depth)));
+        	int y_end_Tiles = (int) Math.min(Math.pow(2, depth)-1, (int)(ROOT_UP - reqDown)/yHeightLat.get(depth));
+        	System.out.println("x_start:"+x_start_Tiles+"x_end:"+x_end_Tiles+"y_start:"+y_start_Tiles+"y_end"+y_end_Tiles);
+        	
+        	String[][] render_grid = new String[x_end_Tiles - x_start_Tiles + 1][y_end_Tiles - y_start_Tiles +1];
+        	int row=0;int col = 0;
+        	for(int j=y_start_Tiles; j<=y_end_Tiles; j++) {
+        		for(int i=x_start_Tiles; i<=x_end_Tiles; i++) { 
+        			render_grid[row][col] = new String("d"+depth+"_x"+i+"_y"+j+".png");
+        			col++;
+        		}
+        		row++;
+        		col=0;//reset col
+        	}
+        	//"render_grid", "raster_ul_lon",
+           // "raster_ul_lat", "raster_lr_lon", "raster_lr_lat", "depth", "query_success"
+        	results.put("render_grid", render_grid);
+        	results.put("raster_ul_lon", x_start_Tiles * xWidthLon.get(depth)+ Constants.ROOT_ULLON);
+        	results.put("raster_lr_lon", (1+x_end_Tiles) * xWidthLon.get(depth) + Constants.ROOT_ULLON);
+        	results.put("raster_ul_lat", Constants.ROOT_ULLAT- y_start_Tiles * yHeightLat.get(depth));
+        	results.put("raster_lr_lat", Constants.ROOT_ULLAT- (1+y_end_Tiles) * yHeightLat.get(depth));
+        	results.put("depth", depth);
+        	results.put("query_success", true);
+        	
+        }
+        //case2: No coverage
+        else  {
+        	results = queryFail();
+        }
+        
         return results;
     }
 
@@ -182,7 +261,7 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
             g2d.setStroke(new BasicStroke(Constants.ROUTE_STROKE_WIDTH_PX,
                     BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             route.stream().reduce((v, w) -> {
-                g2d.drawLine((int) ((graph.lon(v) - ullon) * (1 / wdpp)),
+                g2d.drawLine((int) (((graph).lon(v) - ullon) * (1 / wdpp)),
                         (int) ((ullat - graph.lat(v)) * (1 / hdpp)),
                         (int) ((graph.lon(w) - ullon) * (1 / wdpp)),
                         (int) ((ullat - graph.lat(w)) * (1 / hdpp)));

@@ -1,8 +1,8 @@
 package bearmaps.proj2c;
 
-import edu.princeton.cs.algs4.Stopwatch;
-
 import java.util.List;
+
+import edu.princeton.cs.algs4.Stopwatch;
 
 /**
  * Very basic syntatically correct but semantically incorrect shortest paths solver.

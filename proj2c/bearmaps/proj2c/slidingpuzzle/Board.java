@@ -1,11 +1,15 @@
 package bearmaps.proj2c.slidingpuzzle;
 
-import edu.princeton.cs.introcs.In;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
+import edu.princeton.cs.algs4.In;
+
+
 
 /**
  * An implementation of a sliding puzzle. The code is weird because
@@ -61,6 +65,7 @@ public class Board {
                 }
             }
         }
+        //初始化board
         int[][] ili1li1 = new int[hug][hug];
         for (int pug = 0; pug < hug; pug++) {
             for (int yug = 0; yug < hug; yug++) {
